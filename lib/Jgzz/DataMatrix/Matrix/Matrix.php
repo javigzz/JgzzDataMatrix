@@ -38,20 +38,26 @@ class Matrix {
 		list($this->data, $this->keys_x, $this->keys_y) = $matrixBuilder->build();
 	}
 	
-	
+	/**
+	 * Checks wheather value x,y exists in matrix
+	 *
+	 * @return bool
+	 */
 	public function issetXY($key_x, $key_y){
+		
 		$v = $this->getXY($key_x, $key_y);
 		
 		return $v !== null;
 	}
 	
 	/**
-	 * Comprueba si hay un valor para la posición x,y.
-	 * En caso de que no exista la fila o columna, devuelve null.
+	 * Gets value in matrix for position x,y or null if not exists.
+	 * Gets null if either row or collumn don't exists.
+	 * 
+	 * @return mixed
 	 */
 	public function getXY($key_x, $key_y, $default = null){
 		if(array_key_exists($key_x, $this->data)){
-			//var_dump($this->keys_x[$key_x]);
 			if(array_key_exists($key_y, $this->data[$key_x])){
 				return $this->data[$key_x][$key_y];
 			}

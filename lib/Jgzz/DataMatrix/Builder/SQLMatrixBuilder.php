@@ -76,6 +76,9 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 		$this->campo_valor = $campo_valor;
 	}
 	
+	/**
+	 * 
+	 */
 	public function setOptions($options){
 		$this->options = $options;
 	}
@@ -110,11 +113,26 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 		$option_var_id = 'tabla_'.$var.'_id';
 		
 		$tabla_var_id = array_key_exists($option_var_id, $this->options) ? $this->options[$option_var_id] : 'id';
-		
+	
+		// order by
+		$order_by_str = '';
+		$order_by_option = 'orderby_'.$var;
+		if (array_key_exists($order_by_option, $this->options)){
+			$orderby_dir = array_key_exists('orderby_dir_'.$var, $this->options) ? 
+				$this->options['orderby_dir_'.$var] : 'DESC';
+			
+			if($tabla_var_id != $this->options[$order_by_option]){
+				$str_order_default = ",".$tabla_var_id." ASC ";
+			}
+			
+			
+			$order_by_str = sprintf('ORDER BY %s %s '.$str_order_default, $this->options[$order_by_option], $orderby_dir); 
+		}	
+			
 		$statement = $this->con->prepare(sprintf("
 		SELECT %s 
-		FROM %s
-		",$tabla_var_id, $tabla)
+		FROM %s %s
+		",$tabla_var_id, $tabla, $order_by_str)
 		);
 		
 		$statement->execute();

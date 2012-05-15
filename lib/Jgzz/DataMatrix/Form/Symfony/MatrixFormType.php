@@ -41,13 +41,6 @@ class MatrixFormType extends AbstractType
 				)
 				);
 				
-				// validación: número entero
-				// $builder->addValidator(new CallbackValidator(function($form) {
-		            // if (!is_int($form->get($nombre_campo)->getData())) {
-		                // $form->get($nombre_campo)->addError(new FormError('Se esperaba un número entero'));
-		            // }
-		        // }));
-				
 			}
 			
 		}

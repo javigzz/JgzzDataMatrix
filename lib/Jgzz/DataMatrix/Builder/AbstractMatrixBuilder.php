@@ -31,7 +31,31 @@ abstract class AbstractMatrixBuilder {
 
 	} 
 	
-	
+	/**
+	 * Finds the two arrays of keys for rows and columns implied 
+	 * by the $data bidimiensional and associative array.
+	 */
+	protected function getKeysByData($data)
+	{
+		$keys_x = array_keys($data);
+		
+		$keys_y = array();
+		
+		foreach($keys_x as $x_key)
+		{
+			foreach($data[$x_key] as $y_key => $value)
+			{
+				if(!in_array($y_key, $keys_y)){
+					
+					$keys_y[] = $y_key;
+					
+				}
+				
+			}
+		}
+		
+		return array($keys_x, $keys_y);
+	}
 	
 	/**
 	 * 

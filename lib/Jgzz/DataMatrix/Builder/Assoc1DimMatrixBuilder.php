@@ -14,7 +14,6 @@ class Assoc1DimMatrixBuilder extends AbstractMatrixBuilder {
 		
 		$this->assoc_keys_values = $assoc_keys_values;
 		
-		
 	}
 	
 	protected function doBuild(){
