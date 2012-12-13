@@ -14,7 +14,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * 
 	 */
-	public function testUno()
+	public function testSobreTrivialMatrix()
 	{
 		/*
 		 * matriz de datos de prueba con los nombres de fila a,b,c
@@ -32,14 +32,18 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
 		//$keys_y = array("x", "y", "z");
 		//$keys_x = array("a", "b", "c");
 		
-		$mb = new TrivialMatrixBuilder();
+		$mb = new TrivialMatrixBuilder($data);
 		
 		$m = new Matrix;
 		
 		$m -> build($mb);
 		
-		$this->assertEquals(array("x", "y", "z"), $m->getKeysX(), "X keys not match");
-		$this->assertEquals(array("a", "b", "c"), $m->getKeysY(), "Y keys not match");
+		// comprobación de recuperación de las claves de ambas dimiensiones
+		$this->assertEquals(array("a", "b", "c"), $m->getKeysX(), "X keys not match");
+		$this->assertEquals(array("x", "y", "z"), $m->getKeysY(), "Y keys not match");
+		
+		// comprobaciones sobre getXY
+		$this->assertEquals(array("a", "b", "c"), $m->getKeysX(), "X keys not match");
 		
 	}
 	

@@ -32,7 +32,10 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 		
 		$valores = array();
 		
-		// 
+		/*
+		 * recopilación de claves x e y
+		 * y de array bidimensional de valores para x,y
+		 */
 		foreach($registros as $reg){
 			$key_x = $reg[$this->campo_x];
 			$key_y = $reg[$this->campo_y];
@@ -45,11 +48,16 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 				array_push($keys_y, $key_y);
 			}
 			
-			// TODO: arrays de posiciones para mejorar rendimiento?
+			/*
+			 * 
+			 * TODO: arrays de posiciones para mejorar rendimiento?
+			 */
 			if(!isset($valores[$key_x][$key_y])){
 				$valores[$key_x][$key_y] = $reg[$this->campo_valor];
 			} else {
-				throw new \Exception("Se he intentado sobreescribir un valor de la matriz. Solo se espera un valor por celda");
+				throw new \Exception(
+					sprintf("Se ha intentado sobreescribir un valor de la matriz. Solo se espera un valor por celda. x: %s, y: %s, valor: %s. Anterior valor: %s",
+					$key_x, $key_y, $reg[$this->campo_valor], $valores[$key_x][$key_y]));
 			}
 		}
 		
