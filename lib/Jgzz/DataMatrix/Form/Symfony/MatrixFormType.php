@@ -2,7 +2,7 @@
 namespace Jgzz\DataMatrix\Form\Symfony;
 
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\FormBuilder;
+use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\CallbackValidator;
 
 /**
@@ -21,7 +21,7 @@ class MatrixFormType extends AbstractType
 		
 	}
 	
-    public function buildForm(FormBuilder $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options)
     {
     	
 		$k_x = $this->matrix->getKeysDim('x');
@@ -32,9 +32,9 @@ class MatrixFormType extends AbstractType
 			
 			foreach($k_y as $key_y){
 				
-				$nombre_campo = 'k##'.$key_x.'##'.$key_y;
+				$nombre_campo = 'k__'.$key_x.'__'.$key_y;
+				// TODO: CENTRALIZAR ESTE FORMATO
 				
-				//value="'.$m->getXY($key_x, $key_y).'" id="k##'.$key_x.'##'.$key_y.'"
 				$builder->add($nombre_campo, null, array(
 				'data'=>$this->matrix->getXY($key_x, $key_y),
 				'required' => false,

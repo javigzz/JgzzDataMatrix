@@ -48,6 +48,10 @@ class PesosMatrix extends Matrix {
 		$dim_keys = $this->getKeysDim($dim);
 		
 		foreach ($dim_keys as $dim_key){
+			// var_dump($dim);
+			// var_dump($dim_key);
+			// var_dump($mascaras_addhoc);
+
 			$array_totales[$dim_key] = $this->sum($dim, $dim_key, $mascaras_addhoc);
 		}
 		
@@ -58,27 +62,18 @@ class PesosMatrix extends Matrix {
 	/**
 	 * Suma todas las entradas de la matriz para un valor de una dimesión dada.
 	 * TODO: Se pueden pasar máscaras para aplicara a la operación
-	 * 
-	 * TODO: generalizar a n dimensiones: hipercubo? -> buscar librería
 	 */
 	public function sum($dim, $dim_fija_key, $mascaras_addhoc = null)
 	{
-		// TODO: utilizar iterator o callback o array walk ... para separar iteración de operación
-		
-		// XXX: en más dimensiones, comproboar máscaras en el resto de dimensiones
-		
 		// máscara pasada como argumento a máscara en objeto 
 		$mascaras = is_array($mascaras_addhoc) ? $mascaras_addhoc : 
 			(isset($this->mascaras) ? $this->mascaras : null);
-		
 
 		$data = $this->getData();
 		
 		$sum = 0;
 		
-		
 		// recorrido de las dimensiones
-		// TODO: solo funcionará con 2 dim, para ampliar debe ser proceso recursivo
 		foreach ($this->dimensiones as $walk_dim){
 						
 			// si dimensión fija, saltamos

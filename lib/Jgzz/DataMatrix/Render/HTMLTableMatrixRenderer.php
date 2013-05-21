@@ -15,6 +15,8 @@ class HTMLTableMatrixRenderer extends AbstractMatrixRenderer {
 	public $titulos_y;
 	
 	public function render(Matrix $m){
+
+		$this -> str = "";
 		
 		$k_x = $m->getKeysX();
 		$k_y = $m->getKeysY();

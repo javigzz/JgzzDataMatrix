@@ -49,7 +49,7 @@ class Matrix {
 		
 		return $v !== null;
 	}
-	
+
 	/**
 	 * Gets value in matrix for position x,y or null if not exists.
 	 * Gets null if either row or collumn don't exists.
@@ -69,6 +69,7 @@ class Matrix {
 	 * Dato para la posición x,y,.. dada en un array asociativo $key_arr de la forma 'x'=>key_x, 'y'=>...
 	 */
 	public function getByKeyArrAssoc($key_arr){
+		
 		$arr_ord = array();
 		
 		foreach($this->dimensiones as $var_pos => $var){
@@ -89,7 +90,11 @@ class Matrix {
 		switch (count($key_arr)) {
 			case 2:
 				// dos dimensiones:
-				return $this->data[$key_arr[0]][$key_arr[1]];
+				if(array_key_exists($key_arr[0], $this->data) && array_key_exists($key_arr[1], $this->data[$key_arr[0]])){
+					return $this->data[$key_arr[0]][$key_arr[1]];
+				} else {
+					return null;
+				}
 				break;
 			case 3;
 				// tres dimensiones:
@@ -107,6 +112,11 @@ class Matrix {
 	public function getData(){
 		return $this->data;
 	}
+
+	public function setData($data)
+	{
+		$this -> data = $data;
+	}
 	
 	public function getKeysDim($dim){
 		$n = 'keys_'.$dim;
@@ -119,6 +129,50 @@ class Matrix {
 	
 	public function getKeysY(){
 		return $this->keys_y;
+	}
+
+	public function getColumn($column_key)
+	{
+		$res = array();
+		foreach ($this -> data as $row_key => $row) {
+			foreach ($row as $col_key => $col_value) {
+				if($col_key === $column_key){
+					$res[$row_key] = $col_value;
+					break;
+				}
+			}
+		}
+		return $res;
+	}
+
+
+	/** 
+	 * Transposed data
+	 */
+	public function getTransposedData()
+	{
+		$data_transp = array();
+
+		$keys_x = $this->getKeysDim('x');
+		
+		$keys_y = $this->getKeysDim('y');
+		
+		foreach ($keys_x as $kx){
+
+			if(!array_key_exists($kx, $this->data)){
+				continue;
+				//$this->data[$kx] = array();
+			}
+						
+			foreach ($keys_y as $ky){
+				
+				if(array_key_exists($ky, $this->data[$kx])){
+					$data_transp[$ky][$kx] = $this->data[$kx][$ky];
+				}
+			}
+		}
+
+		return $data_transp;
 	}
 	
 	/**

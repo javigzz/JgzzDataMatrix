@@ -19,9 +19,36 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 	protected $campo_y;
 	
 	protected $campo_valor;
-	
+
 	protected $options = array();
 
+
+	/**
+	 * Opciones para la estrategia de asignación de valores a los puntos de cruce
+	 */
+	
+	/**
+	 * Se asigna el valor del campo indicado en $campo_valor
+	 */
+	const VALUE_STRATEGY_FIELD = 1;
+
+	/**
+	 * Se asigna 1 si existe la conexión. Se ignora $campo_valor
+	 */
+	const VALUE_STRATEGY_EXISTS = 2;
+
+	protected $value_strategy;
+
+
+	public function __construct()
+	{
+		$this -> value_strategy = self::VALUE_STRATEGY_FIELD;
+	}
+
+	public function setStrategy($s)
+	{
+		$this -> value_strategy = $s;
+	}
 	
 	protected function doBuild(){
 		$registros = $this->query();
@@ -39,10 +66,12 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 		foreach($registros as $reg){
 			$key_x = $reg[$this->campo_x];
 			$key_y = $reg[$this->campo_y];
+			
 			// añadimos key x?
 			if(!in_array($key_x, $keys_x)){
 				array_push($keys_x, $key_x);
 			}
+
 			// añadimos key y?
 			if(!in_array($key_y, $keys_y)){
 				array_push($keys_y, $key_y);
@@ -53,8 +82,27 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 			 * TODO: arrays de posiciones para mejorar rendimiento?
 			 */
 			if(!isset($valores[$key_x][$key_y])){
-				$valores[$key_x][$key_y] = $reg[$this->campo_valor];
+
+				// Asignación del valor correspondiente en base a la estrategia
+				
+				switch ($this -> value_strategy) {
+					case self::VALUE_STRATEGY_FIELD:
+						$valores[$key_x][$key_y] = $reg[$this->campo_valor];
+						break;
+
+					case self::VALUE_STRATEGY_EXISTS:
+						$valores[$key_x][$key_y] = 1;
+						break;
+					
+					default:
+						throw new \Exception(sprintf("Value strategy not valid: %s", $this -> value_strategy), 1);
+						break;
+				}
+				
+
 			} else {
+
+				// TODO: permitir sobreescritura ?...
 				throw new \Exception(
 					sprintf("Se ha intentado sobreescribir un valor de la matriz. Solo se espera un valor por celda. x: %s, y: %s, valor: %s. Anterior valor: %s",
 					$key_x, $key_y, $reg[$this->campo_valor], $valores[$key_x][$key_y]));
@@ -97,13 +145,26 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 	 * @return array
 	 */
 	protected function query(){
+
+		switch ($this -> value_strategy) {
+			case self::VALUE_STRATEGY_FIELD:
+				$sql = sprintf("
+				SELECT %s, %s, %s 
+				FROM %s
+				",$this->campo_x, $this->campo_y, $this->campo_valor, $this->tabla);		
+				break;
+			
+			default:
+				$sql = sprintf("
+				SELECT %s, %s 
+				FROM %s
+				",$this->campo_x, $this->campo_y, $this->tabla);		
+
+				break;
+		}
 		
-		$statement = $this->con->prepare(sprintf("
-		SELECT %s, %s, %s 
-		FROM %s
-		",$this->campo_x, $this->campo_y, $this->campo_valor, $this->tabla)
-		);
-		
+		$statement = $this->con->prepare($sql);
+
 		$statement->execute();
 		
 		return $statement->fetchAll(\PDO::FETCH_ASSOC);
@@ -137,11 +198,12 @@ class SQLMatrixBuilder extends AbstractMatrixBuilder {
 			$order_by_str = sprintf('ORDER BY %s %s '.$str_order_default, $this->options[$order_by_option], $orderby_dir); 
 		}	
 			
-		$statement = $this->con->prepare(sprintf("
+		$sql = sprintf("
 		SELECT %s 
 		FROM %s %s
-		",$tabla_var_id, $tabla, $order_by_str)
-		);
+		",$tabla_var_id, $tabla, $order_by_str);
+		
+		$statement = $this->con->prepare($sql);
 		
 		$statement->execute();
 		
