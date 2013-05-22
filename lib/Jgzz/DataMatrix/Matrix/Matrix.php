@@ -27,7 +27,8 @@ class Matrix {
 	 * Array de claves del eje y ordenadas
 	 */
 	private $keys_y;
-	
+
+	private $labels = array('x'=>array(), 'y'=>array());
 	
 	private $mascara_x;
 	
@@ -35,7 +36,8 @@ class Matrix {
 	
 	// 2dim
 	final public function build(AbstractMatrixBuilder $matrixBuilder){
-		list($this->data, $this->keys_x, $this->keys_y) = $matrixBuilder->build();
+		// list($this->data, $this->keys_x, $this->keys_y) = $matrixBuilder->build();
+		$matrixBuilder->build($this);
 	}
 	
 	/**
@@ -118,16 +120,28 @@ class Matrix {
 		$this -> data = $data;
 	}
 	
-	public function getKeysDim($dim){
+	public function getKeysDim($dim)
+	{
 		$n = 'keys_'.$dim;
 		return $this->$n;
+	}
+	
+	public function setKeysX($keys)
+	{
+		$this->keys_x = $keys;
 	}
 	
 	public function getKeysX(){
 		return $this->keys_x;
 	}
 	
-	public function getKeysY(){
+	public function setKeysY($keys)
+	{
+		$this->keys_y = $keys;
+	}
+
+	public function getKeysY()
+	{
 		return $this->keys_y;
 	}
 
@@ -201,5 +215,25 @@ class Matrix {
 			}
 		}
 	}
+
+	public function setAxisLabels($axis, array $labels)
+	{
+		$this->labels[$axis] = $labels;
+	}
+
+	public function setLabel($axis, $key, $label)
+	{
+		$this->labels[$axis][$key] = $label;
+	}
+
+	public function getLabel($axis, $key)
+	{
+		if (array_key_exists($key, $this->labels[$axis])) {
+			return $this->labels[$axis][$key];
+		}
+
+		return null;
+	}
+
 	
 }

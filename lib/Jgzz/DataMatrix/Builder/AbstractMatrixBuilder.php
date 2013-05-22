@@ -1,8 +1,9 @@
 <?php
 namespace Jgzz\DataMatrix\Builder;
 
+use Jgzz\DataMatrix\Matrix\Matrix;
+
 abstract class AbstractMatrixBuilder {
-	
 	
 	abstract protected function doBuild();
 	
@@ -13,10 +14,10 @@ abstract class AbstractMatrixBuilder {
 	 *
 	 * @return array
 	 */
-	final public function build(){
-		list($array_grid, $keys_x, $keys_y) = $this->doBuild();
+	final public function build(Matrix $matrix){
+
+		list($array_grid, $keys_x, $keys_y, $labels_x, $labels_y) = $this->doBuild();
 		
-		//TODO: comprobaciones sobre arrays obtenidos
 		if(!is_array($keys_x)){
 			throw new \Exception("keys_x debe ser array", 1);
 		}
@@ -27,7 +28,19 @@ abstract class AbstractMatrixBuilder {
 			throw new \Exception("array_grid debe ser array", 1);
 		}
 		
-		return array($array_grid, $keys_x, $keys_y);
+		$matrix->setData($array_grid);
+
+		$matrix->setKeysX($keys_x);
+
+		$matrix->setKeysY($keys_y);
+
+		if(!empty($labels_x)){
+			$matrix->setAxisLabels('x',$labels_x);
+		}
+
+		if(!empty($labels_y)){
+			$matrix->setAxisLabels('y',$labels_y);
+		}
 
 	} 
 	

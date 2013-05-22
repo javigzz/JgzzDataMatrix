@@ -49,7 +49,7 @@ class Assoc1DimMatrixBuilder extends AbstractMatrixBuilder {
 			
 		}
 
-		return array($valores, $keys_x, $keys_y);
+		return array($valores, $keys_x, $keys_y, array(), array());
 	}
 	
 }
