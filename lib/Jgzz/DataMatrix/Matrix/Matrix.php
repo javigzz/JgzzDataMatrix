@@ -235,5 +235,10 @@ class Matrix {
 		return null;
 	}
 
+	public function getLabels($axis)
+	{
+		return $this->labels[$axis];
+	}
+
 	
 }

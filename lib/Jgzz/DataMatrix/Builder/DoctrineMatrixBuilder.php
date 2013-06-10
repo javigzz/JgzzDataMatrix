@@ -58,6 +58,16 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 		$this->em = $em;
 	}
 
+	/**
+	 * Sets up the builder
+	 * 
+	 * @param  string $entity_link_name        Name of the link entity between related entities (eg: AcmeBundle:LinkEntity)
+	 * @param  string $association_fieldname_x Property in the link entity that associates to x axis
+	 * @param  [type] $association_fieldname_y Property in the link entity that associates to y axis
+	 * @param  [type] $value_property          Property in the link entity that holds the value of the relation
+	 * @param  array  $options                 See options documentation
+	 * @return null
+	 */
 	public function settings($entity_link_name, $association_fieldname_x, $association_fieldname_y, $value_property, array $options = array())
 	{
 		$this->association_fieldname_x = $association_fieldname_x;
@@ -155,10 +165,10 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 		}
 		
 		// if all x or y are set to be filled with all the possible values:
-		list($keys_x, $amend_label_x) = $this->amendAxisKeysAndLabelsByOptions($keys_x, 'x', $this->options);
+		list($keys_x, $labels_x) = $this->amendAxisKeysAndLabelsByOptions($keys_x, 'x', $this->options);
 
-		list($keys_y, $amend_label_y) = $this->amendAxisKeysAndLabelsByOptions($keys_y, 'y', $this->options);
-		
+		list($keys_y, $labels_y) = $this->amendAxisKeysAndLabelsByOptions($keys_y, 'y', $this->options);
+
 		return array($values, $keys_x, $keys_y, $labels_x, $labels_y);
 	}
 
@@ -206,11 +216,11 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 
 				if(Query::HYDRATE_ARRAY == $this->getAxisHydrationMode()){
 
-					$labels = $entity[$options[$label_field_option]];
+					$labels[$entity['id']] = $entity[$options[$label_field_option]];
 
 				} else {
 
-					$labels = call_user_func(array($entity, $label_method));
+					$labels[$entity->getId()] = call_user_func(array($entity, $label_method));
 
 				}
 			}
