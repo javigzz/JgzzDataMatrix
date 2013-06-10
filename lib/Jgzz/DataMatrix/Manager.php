@@ -3,7 +3,9 @@ namespace Jgzz\DataMatrix;
 
 use Doctrine\ORM\EntityManager;
 use Jgzz\DataMatrix\Matrix\Matrix;
+use Jgzz\DataMatrix\Matrix\PesosMatrix;
 use Jgzz\DataMatrix\Builder\DoctrineMatrixBuilder;
+use Jgzz\DataMatrix\Builder\TrivialMatrixBuilder;
 
 
 

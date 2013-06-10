@@ -16,7 +16,21 @@ abstract class AbstractMatrixBuilder {
 	 */
 	final public function build(Matrix $matrix){
 
-		list($array_grid, $keys_x, $keys_y, $labels_x, $labels_y) = $this->doBuild();
+		$build_response = $this->doBuild();
+
+		$array_grid = $build_response[0];
+
+		$keys_x = $build_response[1];
+
+		$keys_y = $build_response[2];
+
+		if(array_key_exists(3, $build_response)){
+			$labels_x = $build_response[3];
+		}
+
+		if(array_key_exists(4, $build_response)){
+			$labels_y = $build_response[4];
+		}
 		
 		if(!is_array($keys_x)){
 			throw new \Exception("keys_x debe ser array", 1);
