@@ -66,6 +66,11 @@ class Matrix {
 		}
 		return isset($default) ? $default : null;
 	}
+
+	public function setXY($key_x, $key_y, $value)
+	{
+		$this->data[$key_x][$key_y] = $value;
+	}
 	
 	/**
 	 * Dato para la posición x,y,.. dada en un array asociativo $key_arr de la forma 'x'=>key_x, 'y'=>...
