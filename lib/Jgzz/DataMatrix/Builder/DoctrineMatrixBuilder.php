@@ -82,7 +82,7 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 
 		$this->metadata_link = $this->em->getMetadataFactory()->getMetadataFor($this->entity_link_name);
 
-		$this->default_axis_hydration_mode = Query::HYDRATE_ARRAY;
+		$this->default_axis_hydration_mode = Query::HYDRATE_OBJECT;
 	}
 
 	/**
@@ -156,17 +156,12 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 			$values[$key_x][$key_y] = $reg[$this->value_property];
 
 			if(!in_array($key_x, $labels_x)){
-				$labels_x[$key_x] = array_key_exists('label_x_field', $this->options)
-				? $this->buildValueAxisLabel($reg[$this->association_fieldname_x], $this->options['label_x_field']) 
-				: $key_x;
+				$labels_x[$key_x] = $this->initAxisPointLabelByKey('x',$key_x);
 			}
 
 			if(!in_array($key_y, $labels_y)){
-				$labels_y[$key_y] = array_key_exists('label_y_field', $this->options)
-				? $this->buildValueAxisLabel($reg[$this->association_fieldname_y], $this->options['label_y_field']) 
-				: $key_y;
+				$labels_y[$key_y] = $this->initAxisPointLabelByKey('y',$key_y);
 			}
-
 		}
 
 		$labels_x = $this->ammendLabelsForFullAxis($keys_x, $labels_x, 'x');
@@ -176,6 +171,16 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 		$keys_y = array_keys($labels_y);
 	
 		return array($values, $keys_x, $keys_y, $labels_x, $labels_y);
+	}
+
+	private function initAxisPointLabelByKey($axis, $key)
+	{
+		$axisPointObject = $this->axisEntities[$axis][$key];
+		$builder_option_name = 'label_'.$axis.'_field';
+		$label = array_key_exists($builder_option_name, $this->options)
+			? $this->buildValueAxisLabel($axisPointObject, $this->options[$builder_option_name]) 
+			: $key;
+		return $label;
 	}
 
 	/**
@@ -204,14 +209,23 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 	protected function decorateValuesQueryBuilderByAxis(QueryBuilder $qb, $axis_name)
 	{
 		if($axisQb = $this->getCheckAxisQb($axis_name))
-		{
-			$entities = $axisQb->getQuery()->getResult(Query::HYDRATE_ARRAY);
-			$ids = array_map(function($i){ return $i['id']; }, $entities);
+		{	
+			// TODO: get rid of axishydrationmode option...
+			$entities = $axisQb->getQuery()->getResult($this->getAxisHydrationMode());
+
+			$indexentity = array();
+
+            foreach ($entities as $entity) {
+            	$indexentity[$entity->getId()] = $entity;
+            }
+
+			$ids = array_keys($indexentity);
+			// $ids = array_map(function($i){ return $i->getId(); }, $entities);
 
 			$qb->where($qb->expr()->in($axis_name.'.id', ':ids'))
             	->setParameter('ids', $ids);
 
-            $this->axisEntities[$axis_name] = $entities;
+            $this->axisEntities[$axis_name] = $indexentity;
 		}
 	}
 
@@ -244,13 +258,13 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 
 		$axis_label_builder = array_key_exists($label_builder_optname, $this->options)
 			? $this->options[$label_builder_optname]
-			: 'id'; // default axis label builder is 'id'
+			: function($e){ return $e->getId(); };
 
 		$new_labels = array();
 
 		foreach ($entities as $entity) 
 		{
-			$key = $entity['id'];
+			$key = $entity->getId();
 			$new_labels[$key] = array_key_exists($key, $labels)
 			? $labels[$key]
 			: $this->buildValueAxisLabel($entity, $axis_label_builder);
@@ -269,20 +283,20 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 	/**
 	 * Guess the label for an axis point
 	 * 
-	 * @param  Array $axis_reg      Axis point data
-	 * @param  string/function $label_builder Name of field in axis point data or builder function
+	 * @param  Object $axis_reg      			Axis point entity
+	 * @param  string/function $label_builder 	Name of field in axis point data or builder function
 	 * @return string
 	 */
 	private function buildValueAxisLabel($axis_reg, $label_builder)
 	{
 		if (!is_callable($label_builder)){
 
-			return $axis_reg[$label_builder];
+			$getter = $this->to_camel_case('get_'.$label_builder);
+
+			return call_user_func(array($axis_reg, $getter));
 		}
 
-		$a = call_user_func_array($label_builder, array($axis_reg));
-
-		return $a;
+		return call_user_func_array($label_builder, array($axis_reg));
 	}
 
 	private function mapEntitiesIds($entities)
@@ -383,33 +397,6 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 
 		return $query->getResult($this->getAxisHydrationMode());
 	}
-
-	/**
-	 * Fetches all the entries ids for the requested axis
-	 * 
-	 * @param  strin $axis x or y
-	 * @return array       ids of entities
-	 */
-	// public function fetchFullAxisEntriesIds($axis)
-	// {
-	// 	$entities = $this->fetchFullAxisEntities($axis);
-
-	// 	$keys = array_map(function($o){ return $o['id']; }, $entities);
-
-	// 	return $keys;
-	// }
-
-
-	// public function fetchAxisEntriesIdsByQb(QueryBuilder $qb)
-	// {
-	// 	$query = $qb->getQuery();
-
-	// 	$entities = $query->getResult($this->getAxisHydrationMode());
-
-	// 	$keys = array_map(function($o){ return $o['id']; }, $entities);
-
-	// 	return $keys;	
-	// }
 
 	protected function getAxisHydrationMode()
 	{
