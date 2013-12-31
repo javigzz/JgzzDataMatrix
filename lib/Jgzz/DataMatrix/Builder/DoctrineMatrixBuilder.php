@@ -22,13 +22,13 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 
 	/**
 	 *
-	 * - full_x: if set and TRUE all x values from db will be added to the matrix axis
-	 * - full_y: if set and TRUE all y values from db will be added to the matrix axis
+	 * - full_x: if set and TRUE all x values from db (or axis query builder) will be added to the matrix axis
+	 * - full_y: if set and TRUE all y values from db (or axis query builder) will be added to the matrix axis
 	 * - axis_x_querybuilder: if set, x axis will be overriden by this querybuilder result
 	 * - axis_y_querybuilder: if set, y axis will be overriden by this querybuilder result
 	 * - axis_hydration_mode: by default Query::HYDRATE_ARRAY
-	 * - label_x_field
-	 * - label_y_field
+	 * - label_x_field: field name or closure for generating the label for each x axis entry
+	 * - label_y_field: field name or closure for generating the label for each y axis entry
 	 * 
 	 * @var array
 	 */
@@ -52,6 +52,10 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 	 * @var Doctrine\ORM\Query
 	 */
 	protected $queryXY;
+
+	// private $rawResults;
+
+	private $axisEntities = array();
 
 	public function __construct(EntityManager $em)
 	{
@@ -105,9 +109,7 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 	
 	protected function doBuild(){
 
-		$qb = $this->getQueryBuilder();
-
-		$results = $qb->getQuery()->getResult(Query::HYDRATE_ARRAY);
+		$results = $this->findMatrixValues();
 		
 		$keys_x = array();
 		
@@ -115,12 +117,8 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 
 		$labels_x = array();
 
-		$fetch_x_labels = array_key_exists('label_x_field', $this->options);
-
 		$labels_y = array();
 		
-		$fetch_y_labels = array_key_exists('label_y_field', $this->options);
-
 		$values = array();
 
 		$x_id_key = $this->association_fieldname_x.'_id';
@@ -157,77 +155,134 @@ class DoctrineMatrixBuilder extends AbstractMatrixBuilder {
 			
 			$values[$key_x][$key_y] = $reg[$this->value_property];
 
-			// labels
-			$labels_x[$key_x] = $fetch_x_labels ? $reg[$this->association_fieldname_x][$this->options['label_x_field']] : $key_x;
+			if(!in_array($key_x, $labels_x)){
+				$labels_x[$key_x] = array_key_exists('label_x_field', $this->options)
+				? $this->buildValueAxisLabel($reg[$this->association_fieldname_x], $this->options['label_x_field']) 
+				: $key_x;
+			}
 
-			$labels_y[$key_y] = $fetch_y_labels ? $reg[$this->association_fieldname_y][$this->options['label_y_field']] : $key_y;
+			if(!in_array($key_y, $labels_y)){
+				$labels_y[$key_y] = array_key_exists('label_y_field', $this->options)
+				? $this->buildValueAxisLabel($reg[$this->association_fieldname_y], $this->options['label_y_field']) 
+				: $key_y;
+			}
 
 		}
-		
-		// if all x or y are set to be filled with all the possible values:
-		list($keys_x, $labels_x) = $this->amendAxisKeysAndLabelsByOptions($keys_x, 'x', $this->options);
 
-		list($keys_y, $labels_y) = $this->amendAxisKeysAndLabelsByOptions($keys_y, 'y', $this->options);
+		$labels_x = $this->ammendLabelsForFullAxis($keys_x, $labels_x, 'x');
+		$labels_y = $this->ammendLabelsForFullAxis($keys_y, $labels_y, 'y');
 
+		$keys_x = array_keys($labels_x);
+		$keys_y = array_keys($labels_y);
+	
 		return array($values, $keys_x, $keys_y, $labels_x, $labels_y);
 	}
 
 	/**
-	 * Modifies axis keys or not depending on options
+	 * Find values suitable for including in matrix
 	 */
-	private function amendAxisKeysAndLabelsByOptions($keys, $axis, $options)
+	private function findMatrixValues()
 	{
-		$option_name_full_axis = 'full_'.$axis;
+		$qb = $this->getQueryBuilder();
 
-		$option_name_axis_qb = 'axis_'.$axis.'_querybuilder';
+		$this->decorateValuesQueryBuilderByAxis($qb, 'x');
+		$this->decorateValuesQueryBuilderByAxis($qb, 'y');
 
-		if(array_key_exists($option_name_full_axis, $options) && $options[$option_name_full_axis] == true){
+		$results = $qb->getQuery()->getResult(Query::HYDRATE_ARRAY);
 
-			$entities =  $this->fetchFullAxisEntries($axis);
+		return $results;
+	}
 
-			$keys = $this->mapEntitiesIds($entities);
+	/**
+	 * Apply filters to values qb according to criteria applicable to 
+	 * both axis. Also initialize axis 
+	 * entities which may be used afterwards
+	 * 
+	 * @param  QueryBuilder $qb    
+	 * @param  string       $axis_name
+	 */
+	protected function decorateValuesQueryBuilderByAxis(QueryBuilder $qb, $axis_name)
+	{
+		if($axisQb = $this->getCheckAxisQb($axis_name))
+		{
+			$entities = $axisQb->getQuery()->getResult(Query::HYDRATE_ARRAY);
+			$ids = array_map(function($i){ return $i['id']; }, $entities);
 
-		} elseif(array_key_exists($option_name_axis_qb, $options)) {
+			$qb->where($qb->expr()->in($axis_name.'.id', ':ids'))
+            	->setParameter('ids', $ids);
 
-			// $keys = $this->fetchAxisEntriesIdsByQb($options[$option_name_axis_qb]);
+            $this->axisEntities[$axis_name] = $entities;
+		}
+	}
 
-			$qb = $options[$option_name_axis_qb];
+	/**
+	 * If an axis is set to show all its elements, 
+	 * aditional entries might be needed to fetch
+	 */
+	private function ammendLabelsForFullAxis($keys, $labels, $axis)
+	{
+		$full_axis_option_name = 'full_'.$axis;
+		$full_axis = array_key_exists($full_axis_option_name, $this->options) && $this->options[$full_axis_option_name] == true;
 
-			$query = $qb->getQuery();
-
-			$entities = $query->getResult($this->getAxisHydrationMode());
-
-			$keys = $this->mapEntitiesIds($entities);
+		if(!$full_axis)
+		{
+			return $labels;
 		}
 
-		// set up labels depending on options
-
-		$labels = array();
-
-		$label_field_option = 'label_'.$axis.'_field';
-
-		if(isset($entities) && array_key_exists($label_field_option, $options)){
-
-			if(!(Query::HYDRATE_ARRAY == $this->getAxisHydrationMode())){
-				$label_method = $this->to_camel_case('get_'.$label_field_option);
-			}
-
-			foreach ($entities as $entity) {
-
-				if(Query::HYDRATE_ARRAY == $this->getAxisHydrationMode()){
-
-					$labels[$entity['id']] = $entity[$options[$label_field_option]];
-
-				} else {
-
-					$labels[$entity->getId()] = call_user_func(array($entity, $label_method));
-
-				}
-			}
-
+		// fetch entries
+		
+		if (!array_key_exists($axis, $this->axisEntities)) {
+			// if not axis entries are previusly set, asumes all enties
+			$entities =  $this->fetchFullAxisEntities($axis);
+		} else {
+			$entities = $this->axisEntities[$axis];
 		}
 
-		return array($keys, $labels);
+		// fetch labels
+		
+		$label_builder_optname = 'label_'.$axis.'_field';
+
+		$axis_label_builder = array_key_exists($label_builder_optname, $this->options)
+			? $this->options[$label_builder_optname]
+			: 'id'; // default axis label builder is 'id'
+
+		$new_labels = array();
+
+		foreach ($entities as $entity) 
+		{
+			$key = $entity['id'];
+			$new_labels[$key] = array_key_exists($key, $labels)
+			? $labels[$key]
+			: $this->buildValueAxisLabel($entity, $axis_label_builder);
+		}
+
+		return $new_labels;
+	}
+
+	private function getCheckAxisQb($axis)
+	{
+		$op_name = 'axis_'.$axis.'_querybuilder';
+
+		return array_key_exists($op_name, $this->options) ? $this->options[$op_name] : false;
+	}
+
+	/**
+	 * Guess the label for an axis point
+	 * 
+	 * @param  Array $axis_reg      Axis point data
+	 * @param  string/function $label_builder Name of field in axis point data or builder function
+	 * @return string
+	 */
+	private function buildValueAxisLabel($axis_reg, $label_builder)
+	{
+		if (!is_callable($label_builder)){
+
+			return $axis_reg[$label_builder];
+		}
+
+		$a = call_user_func_array($label_builder, array($axis_reg));
+
+		return $a;
 	}
 
 	private function mapEntitiesIds($entities)
