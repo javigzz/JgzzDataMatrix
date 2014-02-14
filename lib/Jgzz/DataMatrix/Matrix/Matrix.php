@@ -7,7 +7,7 @@ class Matrix {
 	
 	protected $dimensiones = array('x','y');
 	
-	private $var_pos = array('x'=>0, 'y'=>1, 'z'=>2);
+	private $var_pos = array('x'=>0, 'y'=>1);
 	
 	/**
 	 * Array bidimensional de datos indexados
@@ -53,7 +53,7 @@ class Matrix {
 	}
 
 	/**
-	 * Gets value in matrix for position x,y or null if not exists.
+	 * Gets value in matrix for position x,y or NULL if not exists.
 	 * Gets null if either row or collumn don't exists.
 	 * 
 	 * @return mixed
@@ -73,10 +73,13 @@ class Matrix {
 	}
 	
 	/**
-	 * Dato para la posición x,y,.. dada en un array asociativo $key_arr de la forma 'x'=>key_x, 'y'=>...
+	 * Dato para la posición x,y
+	 * dada en un array asociativo $key_arr de la forma 'x'=>key_x, 'y'=>...
 	 */
 	public function getByKeyArrAssoc($key_arr){
-		
+
+		trigger_error("Use getXY instead", E_USER_DEPRECATED);
+
 		$arr_ord = array();
 		
 		foreach($this->dimensiones as $var_pos => $var){
@@ -88,31 +91,18 @@ class Matrix {
 	
 	/**
 	 * Devuelve dato alojado en la posición dada por los valores del array.
-	 * Se asume que la primera posición => x, segunda => y,,
-	 * Error en caso de índices no válidos
+	 * Se asume que la primera posición => x, segunda => y
 	 */
 	public function getByKeyArrOrdenado($key_arr){
-		// var_dump($key_arr);
-		// var_dump($this->data);
-		switch (count($key_arr)) {
-			case 2:
-				// dos dimensiones:
-				if(array_key_exists($key_arr[0], $this->data) && array_key_exists($key_arr[1], $this->data[$key_arr[0]])){
-					return $this->data[$key_arr[0]][$key_arr[1]];
-				} else {
-					return null;
-				}
-				break;
-			case 3;
-				// tres dimensiones:
-				return $this->data[$key_arr[0]][$key_arr[1]][$key_arr[2]];
-				break;
-			break;
-			
-			default:
-				throw new \Exception("Se esperaban dos / tres componentes en array de posición. Encontradas: "
-				.count($key_arr)." Array: ".join(', ',$key_arr, 1));
-				break;
+
+		trigger_error("Use getXY instead", E_USER_DEPRECATED);
+
+		if (count($key_arr) != 2) {
+			throw new \Exception("Two elements expected");
+		}
+
+		if(array_key_exists($key_arr[0], $this->data) && array_key_exists($key_arr[1], $this->data[$key_arr[0]])){
+			return $this->data[$key_arr[0]][$key_arr[1]];
 		}
 	}
 	
@@ -150,6 +140,25 @@ class Matrix {
 		return $this->keys_y;
 	}
 
+	/**
+	 * Returns a row as an assoc Array for a row key.
+	 * For a missing row returns an empty array
+	 * 
+	 * @param  string $row_key
+	 * @return array         
+	 */
+	public function getRow($row_key)
+	{
+		return array_key_exists($row_key, $this->data) ? $this->data[$row_key] : array();
+	}
+
+	/**
+	 * Returns a column as an assoc Array. Row keys are kept.
+	 * For a missing column returns an empty array
+	 * 
+	 * @param  string $column_key 	Column label/key
+	 * @return array 				
+	 */
 	public function getColumn($column_key)
 	{
 		$res = array();
@@ -162,6 +171,16 @@ class Matrix {
 			}
 		}
 		return $res;
+	}
+
+	public function setRow(array $row)
+	{
+		throw new \Exception("not implemented");
+	}
+
+	public function setColumn(array $column)
+	{
+		throw new \Exception("not implemented");
 	}
 
 

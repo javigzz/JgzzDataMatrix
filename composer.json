@@ -1,0 +1,24 @@
+{
+    "name": "jgzz/jgzzdatamatrix",
+    "type": "symfony-bundle",
+    "description": "symfony2 solution for generating a matrix for entity x entity cross values",
+    "keywords": ["sonata-admin extension", "matrix"],
+    "homepage": "http://javigzz.es",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Javier González Hernández",
+            "email": "javigzz@yahoo.es",
+            "homepage": "http://javigzz.es"
+        }
+    ],
+    "require": {
+        "php": "> 5.3"
+    },
+    "autoload": {
+        "psr-0": { 
+            "Jgzz\\DataMatrix\\Tests": "tests",
+            "Jgzz\\DataMatrix\\": "lib"
+        }
+    }
+}

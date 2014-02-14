@@ -1,7 +1,9 @@
 Jgzz Data Matrix
-=============
+================
 
 
 Library for handling matrix of data coming from several sources.
-Not intended for doing maths
+Suited for generating a Symfony form with values from some 'weight table', related to two entities.
+
+This library is not intended for doing maths.
 
