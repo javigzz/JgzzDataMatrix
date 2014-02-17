@@ -5,10 +5,6 @@ use Jgzz\DataMatrix\Builder\AbstractMatrixBuilder;
 
 class Matrix {
 	
-	protected $dimensiones = array('x','y');
-	
-	private $var_pos = array('x'=>0, 'y'=>1);
-	
 	/**
 	 * Array bidimensional de datos indexados
 	 *
@@ -17,106 +13,38 @@ class Matrix {
 	private $data;
 	
 	/**
-	 * 
-	 * Array de claves del eje x ordenadas
+	 * Keys of X (rows)
 	 */
 	private $keys_x;
 	
 	/*
-	 * 
-	 * Array de claves del eje y ordenadas
+	 * Keys of Y (columns)
 	 */
 	private $keys_y;
 
+	/**
+	 * Labels for 
+	 */
 	private $labels = array('x'=>array(), 'y'=>array());
 	
-	private $mascara_x;
-	
-	private $mascara_y;
-	
-	// 2dim
-	final public function build(AbstractMatrixBuilder $matrixBuilder){
-		// list($this->data, $this->keys_x, $this->keys_y) = $matrixBuilder->build();
+	final public function build(AbstractMatrixBuilder $matrixBuilder)
+	{
 		$matrixBuilder->build($this);
 	}
-	
-	/**
-	 * Checks wheather value x,y exists in matrix
-	 *
-	 * @return bool
-	 */
-	public function issetXY($key_x, $key_y){
-		
-		$v = $this->getXY($key_x, $key_y);
-		
-		return $v !== null;
-	}
 
-	/**
-	 * Gets value in matrix for position x,y or NULL if not exists.
-	 * Gets null if either row or collumn don't exists.
-	 * 
-	 * @return mixed
-	 */
-	public function getXY($key_x, $key_y, $default = null){
-		if(array_key_exists($key_x, $this->data)){
-			if(array_key_exists($key_y, $this->data[$key_x])){
-				return $this->data[$key_x][$key_y];
-			}
-		}
-		return isset($default) ? $default : null;
-	}
-
-	public function setXY($key_x, $key_y, $value)
+	public function setData(array $data)
 	{
-		$this->data[$key_x][$key_y] = $value;
-	}
-	
-	/**
-	 * Dato para la posición x,y
-	 * dada en un array asociativo $key_arr de la forma 'x'=>key_x, 'y'=>...
-	 */
-	public function getByKeyArrAssoc($key_arr){
-
-		trigger_error("Use getXY instead", E_USER_DEPRECATED);
-
-		$arr_ord = array();
-		
-		foreach($this->dimensiones as $var_pos => $var){
-			array_push($arr_ord, $key_arr[$var]); 
-		}
-		
-		return $this->getByKeyArrOrdenado($arr_ord);
-	}
-	
-	/**
-	 * Devuelve dato alojado en la posición dada por los valores del array.
-	 * Se asume que la primera posición => x, segunda => y
-	 */
-	public function getByKeyArrOrdenado($key_arr){
-
-		trigger_error("Use getXY instead", E_USER_DEPRECATED);
-
-		if (count($key_arr) != 2) {
-			throw new \Exception("Two elements expected");
-		}
-
-		if(array_key_exists($key_arr[0], $this->data) && array_key_exists($key_arr[1], $this->data[$key_arr[0]])){
-			return $this->data[$key_arr[0]][$key_arr[1]];
-		}
+		$this->data = $data;
 	}
 	
 	public function getData(){
 		return $this->data;
 	}
 
-	public function setData($data)
-	{
-		$this -> data = $data;
-	}
-	
 	public function getKeysDim($dim)
 	{
+		trigger_error("Use getKeysX y getKeysY instead", E_USER_DEPRECATED);
+
 		$n = 'keys_'.$dim;
 		return $this->$n;
 	}
@@ -140,6 +68,44 @@ class Matrix {
 		return $this->keys_y;
 	}
 
+
+	/**
+	 * Checks wheather value x,y exists in matrix
+	 *
+	 * @return bool
+	 */
+	public function issetXY($key_x, $key_y){
+		
+		$v = $this->getXY($key_x, $key_y);
+		
+		return $v !== null;
+	}
+
+	/**
+	 * Gets value in matrix for position x,y or NULL if not exists.
+	 * NULL if either row or collumn don't exists.
+	 * 
+	 * @return mixed
+	 */
+	public function getXY($key_x, $key_y, $default = null){
+		if(array_key_exists($key_x, $this->data)){
+			if(array_key_exists($key_y, $this->data[$key_x])){
+				return $this->data[$key_x][$key_y];
+			}
+		}
+		return isset($default) ? $default : null;
+	}
+
+	public function setXY($key_x, $key_y, $value)
+	{
+		$this->data[$key_x][$key_y] = $value;
+	}
+
+	public function delXY($x, $y)
+	{
+		unset($this->data[$x][$y]);
+	}
+	
 	/**
 	 * Returns a row as an assoc Array for a row key.
 	 * For a missing row returns an empty array
@@ -173,33 +139,50 @@ class Matrix {
 		return $res;
 	}
 
-	public function setRow(array $row)
+	/**
+	 * Sets values for a row by its index
+	 * 
+	 * @param string $row_key
+	 * @param array  $row
+	 */
+	public function setRow($row_key, array $row)
 	{
-		throw new \Exception("not implemented");
+		$this->data[$row_key] = $row;
 	}
 
-	public function setColumn(array $column)
+	/**
+	 * Sets values for a column by its index
+	 * 
+	 * @param string $column_key
+	 * @param array  $column     Associative array
+	 */
+	public function setColumn($column_key, array $column)
 	{
-		throw new \Exception("not implemented");
+		foreach ($column as $row_key => $value) {
+			if (array_key_exists($row_key, $this->data)) {
+				$this->data[$row_key][$column_key] = $value;
+			} else {
+				$this->data[$row_key] = array($column_key => $value);
+			}
+		}
 	}
-
 
 	/** 
-	 * Transposed data
+	 * Transpose matrix as a nested associative array
+	 *
+	 * @return array
 	 */
 	public function getTransposedData()
 	{
 		$data_transp = array();
 
-		$keys_x = $this->getKeysDim('x');
-		
-		$keys_y = $this->getKeysDim('y');
+		$keys_x = $this->getKeysX();
+		$keys_y = $this->getKeysY();
 		
 		foreach ($keys_x as $kx){
 
 			if(!array_key_exists($kx, $this->data)){
 				continue;
-				//$this->data[$kx] = array();
 			}
 						
 			foreach ($keys_y as $ky){
@@ -214,30 +197,29 @@ class Matrix {
 	}
 	
 	/**
-	 * Rellena la matriz inicializando las las celdas vacías con el valor $padvalue
-	 *
-	 * 2dim padd
+	 * Fills up the empty cells with the value $padvalue
+	 * 
+	 * @param  string $padvalue   Value applied to matched cells
+	 * @return Matrix
 	 */
 	public function pad($padvalue = ''){
-		// si padding
 		
-		$keys_x = $this->getKeysDim('x');
-		
-		$keys_y = $this->getKeysDim('y');
+		$keys_x = $this->getKeysX();
+		$keys_y = $this->getKeysY();
 		
 		foreach ($keys_x as $kx){
-			
-			if(!array_key_exists($kx, $this->data)){
-					$this->data[$kx] = array();
-			}
+
+			$row = $this->getRow($kx);
 			
 			foreach ($keys_y as $ky){
 				
-				if(!array_key_exists($ky, $this->data[$kx])){
+				if(!array_key_exists($ky, $row) || NULL == $row[$ky]){
 					$this->data[$kx][$ky] = $padvalue;
 				}
 			}
 		}
+
+		return $this;
 	}
 
 	public function setAxisLabels($axis, array $labels)
@@ -263,6 +245,42 @@ class Matrix {
 	{
 		return $this->labels[$axis];
 	}
+
+
+	/**
+	 * Dato para la posición x,y
+	 * dada en un array asociativo $key_arr de la forma 'x'=>key_x, 'y'=>...
+	 */
+	public function getByKeyArrAssoc($key_arr){
+
+		trigger_error("Use getXY instead", E_USER_DEPRECATED);
+
+		$arr_ord = array();
+		 
+		foreach(array('x','y') as $var_pos => $var){
+			array_push($arr_ord, $key_arr[$var]); 
+		}
+		
+		return $this->getByKeyArrOrdenado($arr_ord);
+	}
+	
+	/**
+	 * Devuelve dato alojado en la posición dada por los valores del array.
+	 * Se asume que la primera posición => x, segunda => y
+	 */
+	public function getByKeyArrOrdenado($key_arr){
+
+		trigger_error("Use getXY instead", E_USER_DEPRECATED);
+
+		if (count($key_arr) != 2) {
+			throw new \Exception("Two elements expected");
+		}
+
+		if(array_key_exists($key_arr[0], $this->data) && array_key_exists($key_arr[1], $this->data[$key_arr[0]])){
+			return $this->data[$key_arr[0]][$key_arr[1]];
+		}
+	}
+	
 
 	
 }

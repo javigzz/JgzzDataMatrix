@@ -8,9 +8,7 @@ abstract class AbstractMatrixBuilder {
 	abstract protected function doBuild();
 	
 	/**
-	 * Llama al método doBuild que debe ser implementado y 
-	 * realiza comprobaciones básicas antes de devolver
-	 * los arrays
+	 * Call doBuild method and makes some checks
 	 *
 	 * @return array
 	 */
@@ -33,13 +31,11 @@ abstract class AbstractMatrixBuilder {
 		}
 		
 		if(!is_array($keys_x)){
-			throw new \Exception("keys_x debe ser array", 1);
+			throw new \Exception("keys_x must be array");
 		}
+		
 		if(!is_array($keys_y)){
-			throw new \Exception("keys_y debe ser array", 1);
-		}
-		if(!is_array($array_grid)){
-			throw new \Exception("array_grid debe ser array", 1);
+			throw new \Exception("keys_y must be array");
 		}
 		
 		$matrix->setData($array_grid);
@@ -56,6 +52,7 @@ abstract class AbstractMatrixBuilder {
 			$matrix->setAxisLabels('y',$labels_y);
 		}
 
+		return $matrix;
 	} 
 	
 	/**
@@ -84,12 +81,9 @@ abstract class AbstractMatrixBuilder {
 		return array($keys_x, $keys_y);
 	}
 	
-	/**
-	 * 
-	 */
 	public function getArrayGrid(){
 		if(!isset($this->array_grid)){
-			throw new \Exception("Marix Builder no contiene ningún array_grid. Ejecutar build() previamente");
+			throw new \Exception("No array_grid. Run build() before");
 		}
 		
 		return $this->array_grid;
