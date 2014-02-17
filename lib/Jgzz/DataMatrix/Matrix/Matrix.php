@@ -4,6 +4,10 @@ namespace Jgzz\DataMatrix\Matrix;
 use Jgzz\DataMatrix\Builder\AbstractMatrixBuilder;
 
 class Matrix {
+
+	const DIM_X = 'x';
+
+	const DIM_Y = 'y';
 	
 	/**
 	 * Array bidimensional de datos indexados
@@ -23,9 +27,17 @@ class Matrix {
 	private $keys_y;
 
 	/**
-	 * Labels for 
+	 * Labels for both axis
 	 */
-	private $labels = array('x'=>array(), 'y'=>array());
+	private $labels;
+
+	public function __construct()
+	{
+		$this->labels = array(
+			self::DIM_X => array(),
+			self::DIM_Y => array()
+		);
+	}
 	
 	final public function build(AbstractMatrixBuilder $matrixBuilder)
 	{
@@ -43,10 +55,9 @@ class Matrix {
 
 	public function getKeysDim($dim)
 	{
-		trigger_error("Use getKeysX y getKeysY instead", E_USER_DEPRECATED);
+		$this->checkDimOrException($dim);
 
-		$n = 'keys_'.$dim;
-		return $this->$n;
+		return self::DIM_X == $dim ? $this->getKeysX() : $this->getKeysY();
 	}
 	
 	public function setKeysX($keys)
@@ -244,6 +255,13 @@ class Matrix {
 	public function getLabels($axis)
 	{
 		return $this->labels[$axis];
+	}
+
+	public function checkDimOrException($dimension)
+	{
+		if(!in_array($dimension, array(self::DIM_X, self::DIM_Y))){
+			throw new \Exception("wrong dimension name: ".$dimension);
+		}
 	}
 
 

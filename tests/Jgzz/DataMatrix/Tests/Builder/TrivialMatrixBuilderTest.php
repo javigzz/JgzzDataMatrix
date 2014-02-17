@@ -1,6 +1,7 @@
 <?php
 namespace Jgzz\DataMatrix\Tests;
 
+use Jgzz\DataMatrix\Tests\TestCase;
 use Jgzz\DataMatrix\Matrix\Matrix;
 use Jgzz\DataMatrix\Builder\TrivialMatrixBuilder;
 
@@ -8,34 +9,9 @@ use Jgzz\DataMatrix\Builder\TrivialMatrixBuilder;
  * Tests on basic functions of the Matrix Class. Uses the TrivialMatrixBuilder
  * to generate a Matrix with known data inside.
  */
-class TrivialMatrixBuilderTest extends \PHPUnit_Framework_TestCase
+class TrivialMatrixBuilderTest extends TestCase
 {
 	
-	/**
-	 * matriz de datos de prueba con los nombres de fila a,b,c
-	 * y columna x,y,z:
-	 * 1 0 3
-	 * 2 7 -1
-	 * NULL 4 NULL
-	 */	
-	private $data = array(
-			"a" => array("x" => 1, "y" => 0, "z" => 3),
-			"b" => array("x" => 2, "y" => 7, "z" => -1),
-			"c" => array("y" => 4)
-	);
-
-	private $data_transposed = array(
-			"x" => array("a" => 1, "b" => 2),
-			"y" => array("a" => 0, "b" => 7, "c" => 4),
-			"z" => array("a" => 3, "b" => -1)
-	);
-
-	private $data_x_column = array("a"=>1, "b"=>2);
-
-	private $missingColumnName = "w";
-
-	private $missingRowName = "d";
-
 	public function testLabels()
 	{
 		$matrix = $this->buildFixtureMatrix();
@@ -219,22 +195,5 @@ class TrivialMatrixBuilderTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals($expected_pad2, $matrix->pad(0)->getData(), "Pad puts ceros (or other data) on explicit request");
 	}
 
-	// label functions
-
-	private function buildFixtureMatrix()
-	{
-		return $this->buildMatrix($this->data);
-	}
-
-	private function buildMatrix($data)
-	{
-		$mb = new TrivialMatrixBuilder($data);
-		
-		$matrix = new Matrix;
-		
-		$matrix -> build($mb);
-		
-		return $matrix;		
-	}
-
+	// TODO: label functions
 }
